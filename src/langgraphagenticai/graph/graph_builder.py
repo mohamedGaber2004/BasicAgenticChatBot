@@ -16,3 +16,15 @@ class GraphBuilder :
 
         self.graph_builder.add_edge(START,"chatbot")
         self.graph_builder.add_edge("chatbot",END)
+
+
+    def setup_graph(self,usecase:str) : 
+        """
+        Docstring for setup_graph
+        
+        :param self: Description
+        :param usecase: Description
+        :type usecase: str
+        """
+        if usecase == "Basic Chatbot" : 
+            self.basic_chatbot_build_graph()
