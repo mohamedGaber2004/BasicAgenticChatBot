@@ -2,7 +2,7 @@
 __pycache__/
 *.py[codz]
 *$py.class
-
+basic_chatBot_KN/
 # C extensions
 *.so
 
