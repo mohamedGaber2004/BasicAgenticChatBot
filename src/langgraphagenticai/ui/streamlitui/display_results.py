@@ -80,3 +80,34 @@ class DisplayResultStreamlit :
             for msg in st.session_state.messages:
                 with st.chat_message(msg["role"]):
                     st.write(msg["content"])
+
+        elif usecase =="AI News" : 
+            st.session_state.messages.append({"role": "user", "content": user_message})
+
+            with st.chat_message("user"):
+                st.write(user_message)
+
+            with st.chat_message("assistant"):
+                response_container = st.empty()
+                full_response = ""
+                with st.spinner("Fetching and Summarizing news ... "):
+                    try:
+                        for event in graph.stream({"messages": [HumanMessage(content=user_message)]}):
+                            for value in event.values():
+                                msgs = value.get("messages", [])
+                                if not isinstance(msgs, list):
+                                    msgs = [msgs]
+                                for msg in msgs:
+                                    if isinstance(msg, AIMessage):
+                                        full_response += msg.content
+                                        response_container.markdown(full_response)
+
+                    except Exception as e:
+                        st.error(f"Graph streaming error: {e}")
+
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+
+            st.write("NEWS SUMMARY ...")
+            for msg in st.session_state.messages:
+                with st.chat_message(msg["role"]):
+                    st.write(msg["content"])

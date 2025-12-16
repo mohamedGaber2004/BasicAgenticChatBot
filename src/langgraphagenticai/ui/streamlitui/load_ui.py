@@ -45,6 +45,8 @@ class LoadStreamlitUI:
         # Page setup (call once)
         st.set_page_config(page_title=self.config.get_page_title(), layout="wide")
         st.header(self.config.get_page_title())
+        st.session_state.timeframe = ''
+        st.session_state.IsFetchButtonClicked = False
 
         # Pre-init session state keys (safe to assign BEFORE widget creation)
         if "GROQ_API_KEY" not in st.session_state:
@@ -56,7 +58,7 @@ class LoadStreamlitUI:
             # --- LLM selection ---
             llm_options = self._normalize_options(self.config.get_llm_options())
             if not llm_options:
-                llm_options = ["Groq", "Other"]
+                llm_options = self.config.get_llm_options()
             selected_llm = st.selectbox("Select LLM", llm_options, key="selected_llm")
             self.user_controls["selected_llm"] = selected_llm
 
@@ -64,7 +66,7 @@ class LoadStreamlitUI:
             if isinstance(selected_llm, str) and selected_llm.strip().lower() == "groq":
                 model_options = self._normalize_options(self.config.get_groq_model_options())
                 if not model_options:
-                    model_options = ["groq-1", "groq-2"]
+                    model_options = self.config.get_groq_model_options()
                 selected_groq_model = st.selectbox("Select Model", model_options, key="selected_groq_model")
                 self.user_controls["selected_groq_model"] = selected_groq_model
 
@@ -101,9 +103,11 @@ class LoadStreamlitUI:
             # --- TAVILY API Key: show when Basic Chatbot With Web is selected ---
             # Matching is robust: case-insensitive and trimmed
             target_label = "Basic Chatbot With Web"
+            second_target_label = "AI News"
             if (
                 isinstance(selected_usecase, str)
-                and selected_usecase.strip().lower() == target_label.lower()
+                and selected_usecase.strip().lower() == target_label.lower() or 
+                selected_usecase.strip().lower() == second_target_label.lower()
             ):
                 # TAVILY widget (session_state pre-init above)
                 tavily_api_key = st.text_input(
@@ -126,5 +130,21 @@ class LoadStreamlitUI:
                     disabled=True,
                     key="TAVILY_API_KEY_disabled"
                 )
+
+
+            if (
+                isinstance(selected_usecase, str)
+                and selected_usecase.strip().lower() == second_target_label.lower()
+            ):
+                st.subheader("AI News Explorer")
+                with st.sidebar:
+                    time_frame = st.selectbox(
+                        "Select Time Frame",
+                        ["Daily","Weekly","Monthly"],
+                        index=0
+                    )
+                if st.button("Fetch Latest AI News" , use_container_width=True):
+                    st.session_state.IsFetchButtonClicked = True
+                    st.session_state.timeframe = time_frame
 
         return self.user_controls
