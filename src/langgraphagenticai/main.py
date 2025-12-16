@@ -8,37 +8,44 @@ def load_langgraph_agentic_ai_app():
     ui = LoadStreamlitUI()
     user_input = ui.load_streamlit_ui()
 
-    if not user_input : 
-        st.error("Error : Failed to load user input from the UI.")
-        return
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
 
     user_message = st.chat_input("Enter Your Message")
 
-    if user_message : 
-        try : 
+    if user_message:
+        with st.chat_message("user"):
+            st.write(user_message)
+
+        st.session_state.messages.append(
+            {"role": "user", "content": user_message}
+        )
+
+        try:
             obj_llm_config = GroqLLM(user_controls_input=user_input)
             model = obj_llm_config.get_llm_model()
 
-            if not model :
-                st.error("Error : LLM Model Not intialized")
-                return
-            
             usecase = user_input.get("selected_usecase")
+            graph_builder = GraphBuilder(model)
+            graph = graph_builder.setup_graph(usecase)
 
-            if not usecase :
-                st.error("Error : No usecase selected")
-                return
-            
-            grah_builder = GraphBuilder(model)
+            result = graph.invoke({
+                "messages": st.session_state.messages
+            })
 
-            try : 
-                graph = grah_builder.setup_graph(usecase)
-                DisplayResultStreamlit(usecase,graph,user_message).display_result_on_ui()
-            except Exception as e : 
-                st.error(f"Error:{e}")
-                return
-                
-        except Exception as e : 
-            st.error(f"Error:{e}")
-            return 
+            ai_message = result["messages"][-1].content
+
+            with st.chat_message("assistant"):
+                st.write(ai_message)
+
+            st.session_state.messages.append(
+                {"role": "assistant", "content": ai_message}
+            )
+
+        except Exception as e:
+            st.error(f"Error: {e}")
+
